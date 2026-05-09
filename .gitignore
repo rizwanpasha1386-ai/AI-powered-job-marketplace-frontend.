@@ -1,0 +1,100 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+**/node_modules/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+**/.env
+**/.env.*
+
+# =========================
+# Logs
+# =========================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Build folders
+# =========================
+dist/
+build/
+coverage/
+.next/
+out/
+
+# =========================
+# Vite
+# =========================
+frontend/dist/
+vite.svg
+
+# =========================
+# React
+# =========================
+frontend/build/
+
+# =========================
+# Backend uploads/temp
+# =========================
+uploads/
+temp/
+tmp/
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+
+# =========================
+# VS Code
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# =========================
+# IDE files
+# =========================
+.idea/
+*.swp
+*.swo
+
+# =========================
+# Cache files
+# =========================
+.cache/
+.parcel-cache/
+.eslintcache
+
+# =========================
+# Runtime files
+# =========================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# Optional package manager locks
+# (keep one if collaborating)
+# =========================
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
+
+# =========================
+# Mac/Linux hidden files
+# =========================
+.*.swp
