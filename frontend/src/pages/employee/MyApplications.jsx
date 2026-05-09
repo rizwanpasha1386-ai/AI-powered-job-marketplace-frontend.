@@ -23,6 +23,14 @@ const MyApplications = () => {
 
   if (loading) return <div className="text-center py-20 text-gray-500">Loading your applications...</div>;
 
+  const formatLocation = (loc) => {
+    if (!loc) return 'Remote';
+    if (typeof loc === 'string') return loc;
+    if (loc.address) return loc.address;
+    if (loc.coordinates?.length === 2) return `${loc.coordinates[1].toFixed(4)}, ${loc.coordinates[0].toFixed(4)}`;
+    return 'Remote';
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       <div className="mb-8">
@@ -65,7 +73,7 @@ const MyApplications = () => {
                   <tr key={app._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">{app.job?.title || 'Unknown Job'}</div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">{app.job?.location || 'Remote'}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{formatLocation(app.job?.location)}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-gray-300">{app.job?.recruiter?.companyName || 'Unknown Company'}</div>

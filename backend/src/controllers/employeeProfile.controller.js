@@ -28,14 +28,23 @@ export const createProfile = asyncHandler(async (req, res) => {
     latitude,
   } = req.body;
 
-  // Format location as GeoJSON if coordinates are provided
-  let location;
-  if (longitude !== undefined && latitude !== undefined) {
-    location = {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-    };
+  if (longitude === undefined || latitude === undefined) {
+    res.status(400);
+    throw new Error('Location coordinates (longitude and latitude) are required.');
   }
+
+  const lng = Number(longitude);
+  const lat = Number(latitude);
+
+  if (isNaN(lng) || isNaN(lat)) {
+    res.status(400);
+    throw new Error('Coordinates must be valid numbers.');
+  }
+
+  const location = {
+    type: 'Point',
+    coordinates: [lng, lat],
+  };
 
   const profile = await EmployeeProfile.create({
     user: userId,
@@ -108,11 +117,23 @@ export const updateProfile = asyncHandler(async (req, res) => {
   if (bio) updateFields.bio = bio;
   if (availabilityStatus) updateFields.availabilityStatus = availabilityStatus;
 
-  // Update location if both coordinates are provided
-  if (longitude !== undefined && latitude !== undefined) {
+  if (longitude !== undefined || latitude !== undefined) {
+    if (longitude === undefined || latitude === undefined) {
+      res.status(400);
+      throw new Error('Both longitude and latitude must be provided to update location.');
+    }
+
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+
+    if (isNaN(lng) || isNaN(lat)) {
+      res.status(400);
+      throw new Error('Coordinates must be valid numbers.');
+    }
+
     updateFields.location = {
       type: 'Point',
-      coordinates: [longitude, latitude],
+      coordinates: [lng, lat],
     };
   }
 

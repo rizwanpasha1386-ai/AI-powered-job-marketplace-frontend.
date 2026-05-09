@@ -16,6 +16,8 @@ const ProfileForm = () => {
     preferredJobType: 'Full-time',
     bio: '',
     availabilityStatus: 'Available',
+    longitude: '',
+    latitude: '',
     education: [],
     experience: [],
   });
@@ -33,6 +35,8 @@ const ProfileForm = () => {
             preferredJobType: p.preferredJobType || 'Full-time',
             bio: p.bio || '',
             availabilityStatus: p.availabilityStatus || 'Available',
+            longitude: p.location?.coordinates?.[0] || '',
+            latitude: p.location?.coordinates?.[1] || '',
             education: p.education || [],
             experience: p.experience || [],
           });
@@ -99,6 +103,8 @@ const ProfileForm = () => {
       ...formData,
       skills: formData.skills.split(',').map((s) => s.trim()).filter((s) => s !== ''),
       preferredSalary: formData.preferredSalary ? Number(formData.preferredSalary) : undefined,
+      longitude: formData.longitude ? Number(formData.longitude) : undefined,
+      latitude: formData.latitude ? Number(formData.latitude) : undefined,
     };
 
     try {
@@ -183,6 +189,30 @@ const ProfileForm = () => {
                 placeholder="JavaScript, React, Node.js"
               />
             </div>
+
+            <Input
+              label="Longitude *"
+              id="longitude"
+              name="longitude"
+              type="number"
+              step="any"
+              value={formData.longitude}
+              onChange={handleChange}
+              placeholder="e.g. -74.0060"
+              required
+            />
+            
+            <Input
+              label="Latitude *"
+              id="latitude"
+              name="latitude"
+              type="number"
+              step="any"
+              value={formData.latitude}
+              onChange={handleChange}
+              placeholder="e.g. 40.7128"
+              required
+            />
 
             <div className="sm:col-span-2 mb-4">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Bio</label>

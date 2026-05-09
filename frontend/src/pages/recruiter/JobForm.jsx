@@ -19,6 +19,8 @@ const JobForm = () => {
     salary: '',
     jobType: 'Full-time',
     experienceRequired: '0-1 year',
+    longitude: '',
+    latitude: '',
     location: '',
     status: 'open',
   });
@@ -36,7 +38,9 @@ const JobForm = () => {
             salary: job.salary || '',
             jobType: job.jobType || 'Full-time',
             experienceRequired: job.experienceRequired || '0-1 year',
-            location: job.location || '',
+            longitude: job.location?.coordinates?.[0] || '',
+            latitude: job.location?.coordinates?.[1] || '',
+            location: job.location?.address || '',
             status: job.status || 'open',
           });
         } catch (err) {
@@ -62,6 +66,9 @@ const JobForm = () => {
       ...formData,
       requiredSkills: formData.requiredSkills.split(',').map((s) => s.trim()).filter((s) => s !== ''),
       salary: formData.salary ? Number(formData.salary) : undefined,
+      longitude: formData.longitude ? Number(formData.longitude) : undefined,
+      latitude: formData.latitude ? Number(formData.latitude) : undefined,
+      address: formData.location, // Mapping the text input 'location' to 'address' for the backend
     };
 
     if (!payload.title || !payload.description || payload.requiredSkills.length === 0) {
@@ -149,13 +156,37 @@ const JobForm = () => {
             />
 
             <Input
-              label="Location"
+              label="Location (Address/City)"
               id="location"
               name="location"
               type="text"
               value={formData.location}
               onChange={handleChange}
-              placeholder="e.g. New York, NY or Remote"
+              placeholder="e.g. New York, NY"
+            />
+
+            <Input
+              label="Longitude *"
+              id="longitude"
+              name="longitude"
+              type="number"
+              step="any"
+              value={formData.longitude}
+              onChange={handleChange}
+              placeholder="e.g. -74.0060"
+              required
+            />
+            
+            <Input
+              label="Latitude *"
+              id="latitude"
+              name="latitude"
+              type="number"
+              step="any"
+              value={formData.latitude}
+              onChange={handleChange}
+              placeholder="e.g. 40.7128"
+              required
             />
 
             <div>

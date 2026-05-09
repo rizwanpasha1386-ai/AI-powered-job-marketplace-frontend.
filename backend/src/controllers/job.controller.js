@@ -1,5 +1,6 @@
 import { Job } from '../models/job.model.js';
 import { RecruiterProfile } from '../models/recruiterProfile.model.js';
+import { EmployeeProfile } from '../models/employeeProfile.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
 /**
@@ -33,14 +34,24 @@ export const createJob = asyncHandler(async (req, res) => {
     address,
   } = req.body;
 
-  let location;
-  if (longitude !== undefined && latitude !== undefined) {
-    location = {
-      type: 'Point',
-      coordinates: [longitude, latitude],
-      address,
-    };
+  if (longitude === undefined || latitude === undefined) {
+    res.status(400);
+    throw new Error('Location coordinates (longitude and latitude) are required.');
   }
+
+  const lng = Number(longitude);
+  const lat = Number(latitude);
+
+  if (isNaN(lng) || isNaN(lat)) {
+    res.status(400);
+    throw new Error('Coordinates must be valid numbers.');
+  }
+
+  const location = {
+    type: 'Point',
+    coordinates: [lng, lat],
+    address,
+  };
 
   const job = await Job.create({
     recruiter: profile._id,
@@ -104,10 +115,23 @@ export const updateJob = asyncHandler(async (req, res) => {
   if (experienceRequired) updateFields.experienceRequired = experienceRequired;
   if (status) updateFields.status = status;
 
-  if (longitude !== undefined && latitude !== undefined) {
+  if (longitude !== undefined || latitude !== undefined) {
+    if (longitude === undefined || latitude === undefined) {
+      res.status(400);
+      throw new Error('Both longitude and latitude must be provided to update location.');
+    }
+
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+
+    if (isNaN(lng) || isNaN(lat)) {
+      res.status(400);
+      throw new Error('Coordinates must be valid numbers.');
+    }
+
     updateFields.location = {
       type: 'Point',
-      coordinates: [longitude, latitude],
+      coordinates: [lng, lat],
       address,
     };
   }
@@ -174,18 +198,68 @@ export const getRecruiterJobs = asyncHandler(async (req, res) => {
  * @access  Private (Authenticated users)
  */
 export const getAllJobs = asyncHandler(async (req, res) => {
-  // Only fetch open jobs
-  const jobs = await Job.find({ status: 'open' })
-    .populate({
-      path: 'recruiter',
-      select: 'companyName companyLocation verifiedStatus',
-    })
-    .sort({ createdAt: -1 });
+  let exactMatchJobs = [];
+  let partialMatchJobs = [];
+  let noSkillFilterJobs = [];
+
+  // If the user is an employee, filter by their profile skills
+  if (req.user.role === 'employee') {
+    const profile = await EmployeeProfile.findOne({ user: req.user._id });
+    
+    // Apply hybrid filtering if the employee has skills listed
+    if (profile && profile.skills && profile.skills.length > 0) {
+      // Step 1: Normalize skills
+      const normalizedSkills = profile.skills.map(skill => skill.toLowerCase().trim());
+      
+      // Create Exact Regexes (case-insensitive exact matches)
+      const exactRegexes = normalizedSkills.map(skill => new RegExp(`^${skill}$`, 'i'));
+      
+      // Step 2: Fetch exact skill matches first
+      exactMatchJobs = await Job.find({ 
+        status: 'open', 
+        requiredSkills: { $in: exactRegexes } 
+      })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      .sort({ createdAt: -1 });
+
+      // Step 3: Fetch partial similar matches
+      // Hackathon-friendly stemming: remove common suffixes (er, ing, ed, s) to match root words
+      const partialRegexes = normalizedSkills.map(skill => {
+        const baseRoot = skill.replace(/(ing|er|ed|s)$/i, '');
+        return new RegExp(baseRoot, 'i'); // matches anywhere in the string (e.g. "Car Driver" matches "Driv")
+      });
+
+      // Extract IDs to prevent returning duplicate jobs in the partial match list
+      const exactMatchIds = exactMatchJobs.map(job => job._id);
+
+      partialMatchJobs = await Job.find({
+        status: 'open',
+        _id: { $nin: exactMatchIds }, // Avoid duplicates
+        requiredSkills: { $in: partialRegexes }
+      })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      .sort({ createdAt: -1 });
+
+    } else {
+      // Employee exists but has no skills listed, fallback to returning all open jobs
+      noSkillFilterJobs = await Job.find({ status: 'open' })
+        .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+        .sort({ createdAt: -1 });
+    }
+  } else {
+    // User is a recruiter or other role, return all open jobs
+    noSkillFilterJobs = await Job.find({ status: 'open' })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      .sort({ createdAt: -1 });
+  }
+
+  // Combine arrays: exact matches naturally prioritized at the top, followed by partial matches
+  const allJobs = [...exactMatchJobs, ...partialMatchJobs, ...noSkillFilterJobs];
 
   res.status(200).json({
     success: true,
-    count: jobs.length,
-    data: jobs,
+    count: allJobs.length,
+    data: allJobs,
   });
 });
 

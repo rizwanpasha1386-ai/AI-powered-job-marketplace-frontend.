@@ -43,6 +43,14 @@ const JobDetails = () => {
   if (error) return <div className="text-center py-20 text-red-500">{error}</div>;
   if (!job) return <div className="text-center py-20 text-gray-500">Job not found.</div>;
 
+  const formatLocation = (loc) => {
+    if (!loc) return 'Remote';
+    if (typeof loc === 'string') return loc;
+    if (loc.address) return loc.address;
+    if (loc.coordinates?.length === 2) return `${loc.coordinates[1].toFixed(4)}, ${loc.coordinates[0].toFixed(4)}`;
+    return 'Remote';
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <Link to="/employee/jobs" className="text-blue-600 dark:text-blue-400 hover:underline flex items-center mb-6">
@@ -67,7 +75,7 @@ const JobDetails = () => {
             </div>
             <div className="flex items-center">
               <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-              <span>{job.location || 'Remote'}</span>
+              <span>{formatLocation(job.location)}</span>
             </div>
             <div className="flex items-center">
               <svg className="w-5 h-5 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
