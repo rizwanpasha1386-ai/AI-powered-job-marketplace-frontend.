@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import TrustSnippetBadge from './TrustSnippetBadge';
 
 const JobCard = ({ job, isRecruiterView = false, onDelete }) => {
   const formatLocation = (loc) => {
@@ -59,6 +60,14 @@ const JobCard = ({ job, isRecruiterView = false, onDelete }) => {
             </span>
           )}
         </div>
+
+        {/* Recruiter Trust Snippet — only on employee-facing view */}
+        {!isRecruiterView && (
+          <div className="mb-4 p-3 rounded-lg bg-gray-50 dark:bg-gray-700/40 border border-gray-100 dark:border-gray-700">
+            <p className="text-[10px] font-bold uppercase text-gray-400 dark:text-gray-500 mb-2 tracking-wider">Recruiter Trust</p>
+            <TrustSnippetBadge snippet={job.recruiter?.trustSnippet} variant="recruiter" />
+          </div>
+        )}
       </div>
 
       <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">

@@ -2,6 +2,7 @@ import { Application } from '../models/application.model.js';
 import { Job } from '../models/job.model.js';
 import { EmployeeProfile } from '../models/employeeProfile.model.js';
 import { RecruiterProfile } from '../models/recruiterProfile.model.js';
+import { WorkSession } from '../models/workSession.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { createNotification } from '../services/notification.service.js';
 
@@ -165,6 +166,29 @@ export const updateApplicationStatus = asyncHandler(async (req, res) => {
   if (application.job.recruiter.toString() !== recruiterProfile._id.toString()) {
     res.status(403);
     throw new Error('Not authorized to update this application');
+  }
+
+  // Handle 'accepted' specifically for WorkSession creation
+  if (status === 'accepted') {
+    if (application.job.status !== 'open') {
+      res.status(400);
+      throw new Error('This job is no longer open for acceptance (another candidate may have been accepted).');
+    }
+
+    // 1. Close the job
+    application.job.status = 'closed';
+    await application.job.save();
+
+    // 2. Create the active Work Session
+    await WorkSession.create({
+      job: application.job._id,
+      recruiter: recruiterProfile._id,
+      employee: application.employee._id,
+      status: 'active',
+      acceptedAt: Date.now(),
+    });
+
+    // 3. Reject all other pending applications for this job (optional cleanup, skipping to keep simple as requested, job closure is enough)
   }
 
   application.status = status;

@@ -2,6 +2,20 @@ import { Job } from '../models/job.model.js';
 import { RecruiterProfile } from '../models/recruiterProfile.model.js';
 import { EmployeeProfile } from '../models/employeeProfile.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getRecruiterTrustSnippet } from '../services/ai/trustSnippet.service.js';
+
+/**
+ * Converts a populated Job document to a plain object with recruiter trust data attached.
+ * Reads recruiter.user from the populated subdoc to fetch the trust snippet.
+ */
+const enrichJobWithTrust = async (job) => {
+  const plain = job.toObject ? job.toObject() : job;
+  const recruiterUserId = plain.recruiter?.user ?? null;
+  if (recruiterUserId) {
+    plain.recruiter.trustSnippet = await getRecruiterTrustSnippet(recruiterUserId);
+  }
+  return plain;
+};
 
 /**
  * Helper function to get the current user's RecruiterProfile
@@ -215,12 +229,13 @@ export const getAllJobs = asyncHandler(async (req, res) => {
       const exactRegexes = normalizedSkills.map(skill => new RegExp(`^${skill}$`, 'i'));
       
       // Step 2: Fetch exact skill matches first
-      exactMatchJobs = await Job.find({ 
+      const rawExact = await Job.find({ 
         status: 'open', 
         requiredSkills: { $in: exactRegexes } 
       })
-      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus user' })
       .sort({ createdAt: -1 });
+      exactMatchJobs = await Promise.all(rawExact.map(enrichJobWithTrust));
 
       // Step 3: Fetch partial similar matches
       // Hackathon-friendly stemming: remove common suffixes (er, ing, ed, s) to match root words
@@ -237,20 +252,23 @@ export const getAllJobs = asyncHandler(async (req, res) => {
         _id: { $nin: exactMatchIds }, // Avoid duplicates
         requiredSkills: { $in: partialRegexes }
       })
-      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus user' })
       .sort({ createdAt: -1 });
+      partialMatchJobs = await Promise.all(partialMatchJobs.map(enrichJobWithTrust));
 
     } else {
       // Employee exists but has no skills listed, fallback to returning all open jobs
-      noSkillFilterJobs = await Job.find({ status: 'open' })
-        .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+      const raw = await Job.find({ status: 'open' })
+        .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus user' })
         .sort({ createdAt: -1 });
+      noSkillFilterJobs = await Promise.all(raw.map(enrichJobWithTrust));
     }
   } else {
     // User is a recruiter or other role, return all open jobs
-    noSkillFilterJobs = await Job.find({ status: 'open' })
-      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus' })
+    const raw = await Job.find({ status: 'open' })
+      .populate({ path: 'recruiter', select: 'companyName companyLocation verifiedStatus user' })
       .sort({ createdAt: -1 });
+    noSkillFilterJobs = await Promise.all(raw.map(enrichJobWithTrust));
   }
 
   // Combine arrays: exact matches naturally prioritized at the top, followed by partial matches
@@ -271,7 +289,7 @@ export const getAllJobs = asyncHandler(async (req, res) => {
 export const getJobById = asyncHandler(async (req, res) => {
   const job = await Job.findById(req.params.id).populate({
     path: 'recruiter',
-    select: 'companyName companyDescription recruiterName companyLocation verifiedStatus',
+    select: 'companyName companyDescription recruiterName companyLocation verifiedStatus user',
   });
 
   if (!job) {
@@ -279,8 +297,11 @@ export const getJobById = asyncHandler(async (req, res) => {
     throw new Error('Job not found');
   }
 
+  // Enrich the single job with the recruiter's public trust snippet
+  const enriched = await enrichJobWithTrust(job);
+
   res.status(200).json({
     success: true,
-    data: job,
+    data: enriched,
   });
 });

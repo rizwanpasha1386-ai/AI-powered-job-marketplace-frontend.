@@ -10,6 +10,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { name: 'My Profile', path: '/employee/profile' },
     { name: 'Find Jobs', path: '/employee/jobs' },
     { name: 'My Applications', path: '/employee/applications' },
+    { name: 'My Active Work', path: '/employee/work' },
   ];
 
   const recruiterLinks = [
@@ -18,6 +19,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }) => {
     { name: 'Post a Job', path: '/recruiter/jobs/new' },
     { name: 'Manage Jobs', path: '/recruiter/jobs' },
     { name: 'Search Talent', path: '/recruiter/search' },
+    { name: 'Active Workers', path: '/recruiter/work' },
   ];
 
   const links = user?.role === 'recruiter' ? recruiterLinks : employeeLinks;

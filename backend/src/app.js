@@ -34,6 +34,8 @@ import searchRouter from './routes/search.routes.js';
 import applicationRouter from './routes/application.routes.js';
 import notificationRouter from './routes/notification.routes.js';
 import aiRouter from './routes/ai.routes.js';
+import workSessionRouter from './routes/workSession.routes.js';
+import ratingRouter from './routes/rating.routes.js';
 
 // Mount routers
 app.use('/api/v1/auth', authRouter);
@@ -44,6 +46,8 @@ app.use('/api/v1/search', searchRouter);
 app.use('/api/v1/applications', applicationRouter);
 app.use('/api/v1/notifications', notificationRouter);
 app.use('/api/v1/ai', aiRouter);
+app.use('/api/v1/work-sessions', workSessionRouter);
+app.use('/api/v1/ratings', ratingRouter);
 
 // Centralized error handling middleware should be added after all routes
 app.use(errorHandler);

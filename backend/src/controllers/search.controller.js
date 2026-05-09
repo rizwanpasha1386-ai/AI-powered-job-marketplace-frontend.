@@ -1,5 +1,6 @@
 import { EmployeeProfile } from '../models/employeeProfile.model.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { getEmployeeTrustSnippet } from '../services/ai/trustSnippet.service.js';
 
 /**
  * @desc    Search nearby employees with geospatial queries and filters
@@ -84,9 +85,20 @@ export const searchEmployees = asyncHandler(async (req, res) => {
   // Execute the aggregation
   const employees = await EmployeeProfile.aggregate(pipeline);
 
+  // Attach a public trust snippet to each employee result
+  const enriched = await Promise.all(
+    employees.map(async (emp) => {
+      const userId = emp.userDetails?._id ?? null;
+      if (userId) {
+        emp.trustSnippet = await getEmployeeTrustSnippet(userId);
+      }
+      return emp;
+    })
+  );
+
   res.status(200).json({
     success: true,
-    count: employees.length,
-    data: employees,
+    count: enriched.length,
+    data: enriched,
   });
 });

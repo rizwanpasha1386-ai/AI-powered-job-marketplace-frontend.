@@ -24,6 +24,9 @@ import JobForm from './pages/recruiter/JobForm';
 import JobApplicants from './pages/recruiter/JobApplicants';
 import EmployeeSearch from './pages/recruiter/EmployeeSearch';
 import Notifications from './pages/Notifications';
+import MyWork from './pages/employee/MyWork';
+import ActiveWorkers from './pages/recruiter/ActiveWorkers';
+import Workspace from './pages/work-session/Workspace';
 
 function App() {
   return (
@@ -41,6 +44,7 @@ function App() {
           
           {/* Shared Routes */}
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/work-session/:id" element={<Workspace />} />
 
           {/* Employee Only Routes */}
           <Route element={<RoleRoute requiredRole="employee" />}>
@@ -50,6 +54,7 @@ function App() {
             <Route path="/employee/jobs" element={<JobList />} />
             <Route path="/employee/jobs/:id" element={<JobDetails />} />
             <Route path="/employee/applications" element={<MyApplications />} />
+            <Route path="/employee/work" element={<MyWork />} />
           </Route>
 
           {/* Recruiter Only Routes */}
@@ -62,6 +67,7 @@ function App() {
             <Route path="/recruiter/jobs/edit/:id" element={<JobForm />} />
             <Route path="/recruiter/jobs/:id/applicants" element={<JobApplicants />} />
             <Route path="/recruiter/search" element={<EmployeeSearch />} />
+            <Route path="/recruiter/work" element={<ActiveWorkers />} />
           </Route>
 
         </Route>
